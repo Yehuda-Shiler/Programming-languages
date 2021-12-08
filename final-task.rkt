@@ -38,9 +38,15 @@
     [CallD SOL SOL SOL])
 
 ;; ----------------------------------------------------
+;; question 2)
 ;; Operations on SETs
 ;; Please complete the missing parts, and add comments (comments should specify 
 ;; the role of each procedure, but also describe your work process). Keep your code readable. 
+
+
+;; the function check if the list of numbers contain the specipic number
+;;the function used be recursive and check any time the first number in list
+;;if is equal is true, else we check the rest of the list.
 
   (: ismember? : Number SET  -> Boolean)
   (define (ismember? n l)
@@ -53,30 +59,69 @@
   (test (ismember? 1 '(3 4 5 1 3 4)))
   (test (ismember? 1 '(1)))
 
+#|The function remove duplicate numbers. This is a recursive funtion. 
+The first condition check if there are empty list or 1 element in list
+The second condition check if the first number is exist in the list then we skip it and sent the rest of the list.
+The third condition builds the new set.
+
+|#
   (: remove-duplicates : SET  -> SET)
   (define (remove-duplicates l)
     (cond [(or (null? l) (null? (rest l))) l]
-          [<-- fill in -->]
+          [(and (ismember? (first l) (rest l)))(remove-duplicates (rest l))]
           [else (cons (first l) (remove-duplicates (rest l)))]))
 
-  
-  (: create-sorted-set : SET -> SET)
+(test (remove-duplicates '(3 4 5)) => '(3 4 5))
+(test (remove-duplicates '( 3 2 3 5 6)) => '(2 3 5 6))
+(test (remove-duplicates '(3 4 5 1 3 4)) => '(5 1 3 4))
+(test (remove-duplicates '(1)) => '(1))
+(test (remove-duplicates '()) => '())
+(test (remove-duplicates '(1 1 1 1 2 2 2 2)) => '(1 2))
+
+#|the function acept a list remove the duplicate number and sort by size
+the funcion uses a previos functions
+|#
+
+ (: create-sorted-set : SET -> SET)
   (define (create-sorted-set l)
-    (<-- fill in --> (sort l <)))
-  
+    (sort (remove-duplicates l) <))
+
+(test (create-sorted-set '(3 2 7 3)) => '(2 3 7))
+(test (create-sorted-set '(1 2 3)) => '(1 2 3))
+(test (create-sorted-set '(1)) => '(1))
+(test (create-sorted-set '(9 8 9 8 1)) => '(1 8 9))
+(test (create-sorted-set '(1 1 1 1)) => '(1))
+(test (create-sorted-set '(2 3 4 2 3 4 )) => '(2 3 4))
+
+ #|The function uses the racket built in append function to concatenate the lists.
+Then I use the previous implementation to sort and remove duplicates.
+|#
   (: set-union : SET SET -> SET)
   (define (set-union A B)
-    ( <-- fill in -->))
+     (create-sorted-set (append A B)))
 
+(test (set-union '(3 2 7 3)'(1 2 5 3)) => '(1 2 3 5 7))
+(test (set-union '(1 2)'(2 1)) => '(1 2))
+(test (set-union '(9 7 1 3)'(1 7)) => '(1 3 7 9))
+(test (set-union '()'(1  5 3)) => '(1 3 5))
+(test (set-union '(3 3 3)'(1 1 1 2)) => '(1 2 3))
+
+#|
+This function uses filter built in function and gives it two arguments: a function and a list.
+It returns all the members that are exist in the A list.
+|#
   (: set-intersection : SET SET -> SET)
   (define (set-intersection A B)
     (: mem-filter : Number -> Boolean)
     (define (mem-filter n)
       (ismember? n A))
-    (filter <-- fill in -->))
-  
+    (sort (filter mem-filter B)<))
 
-
+(test (set-intersection '(3 2 7 3)'(1 2 5 3)) => '(2 3))
+(test (set-intersection '(1 2)'(2 1)) => '(1 2))
+(test (set-intersection '(9 7 1 3)'(1 7)) => '(1 7))
+(test (set-intersection '()'(1  5 3)) => '())
+(test (set-intersection '(3 3 3)'(1 1 1 2 3)) => '(3))
 ;; ---------------------------------------------------------
 ;; Parser
   ;; Please complete the missing parts, and add comments (comments should specify 
