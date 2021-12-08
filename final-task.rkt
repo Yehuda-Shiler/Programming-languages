@@ -123,33 +123,36 @@ It returns all the members that are exist in the A list.
 (test (set-intersection '()'(1  5 3)) => '())
 (test (set-intersection '(3 3 3)'(1 1 1 2 3)) => '(3))
 ;; ---------------------------------------------------------
+;;question 3)
 ;; Parser
-  ;; Please complete the missing parts, and add comments (comments should specify 
-;; choices you make, and also describe your work process). Keep your code readable. 
+
   (: parse-sexpr : Sexpr -> SOL)
   ;; to convert s-expressions into SOLs
   (define (parse-sexpr sexpr)
     (match sexpr
-      [(list (number: ns) ...) (<-- fill in --> )] ;; sort and remove-duplicates
+      [(list (number: ns) ...) (Set (create-sorted-set ns))] ;; return list with function create-sorted-set which sort and remove-duplicates the list.
       [(symbol: name) (Id name)]
-      [(cons 'with more)
+      [(cons 'with more);;'with is a syntatic sugar and we use in Call. Call is equals to 'with' in the way that both can take an expression and an ID and replace the ID within the expression with another expression
        (match sexpr
          [(list 'with (list (symbol: name) named) body)
-          <-- fill in -->] ;;; there is no With constructor replace with existing constructors
+          (CallS (Fun name name (parse-sexpr body))(parse-sexpr named)(parse-sexpr named))] ;;; there is no With constructor replace with existing constructors
          [else (error 'parse-sexpr "bad `with' syntax in ~s" sexpr)])]
       [(cons 'fun more)
        (match sexpr
          [(list 'fun (list (symbol: name1) (symbol: name2)) body)
           (if (eq? name1 name2)
-              (error <-- fill in -->) ;; cannot use the same param name twice
+              (error 'parse-sexpr "`fun' has a duplicate param name in ~s" sexpr) ;; cannot use the same param name twice ;;We need to throw an exception from the test section
               (Fun name1 name2 (parse-sexpr body)))]
          [else (error 'parse-sexpr "bad `fun' syntax in ~s" sexpr)])]
       [(list 'scalar-mult (number: sc) rhs) (Smult sc (parse-sexpr rhs))]
       [(list 'intersect lhs rhs) (Inter (parse-sexpr lhs) (parse-sexpr rhs))]
       [(list 'union lhs rhs) (Union (parse-sexpr lhs) (parse-sexpr rhs))]
-      [(list 'call-static fun arg1 arg2) <-- fill in -->]
-      [<-- fill in -->]
+      ;; CallS and CallD in the parsing level: need to call to the right constructor: CallS/CallD
+      ;; and then to pass the arguments after we call parse-sexpr because we want to convert them to SOL (from s-expression)
+      [(list 'call-static fun arg1 arg2)(CallS (parse-sexpr fun) (parse-sexpr arg1) (parse-sexpr arg2))]
+      [(list 'call-dynamic fun arg1 arg2) (CallD (parse-sexpr fun) (parse-sexpr arg1) (parse-sexpr arg2))];;
       [else (error 'parse-sexpr "bad syntax in ~s" sexpr)]))
+
 
     
 
@@ -162,8 +165,19 @@ It returns all the members that are exist in the A list.
   
 (test (parse "{1 2 3  4 1 4  4 2 3 4 1 2 3}") => (Set '(1 2 3 4)))
 (test (parse "{union {1 2 3} {4 2 3}}") => (Union (Set '(1 2 3)) (Set '(2 3 4))))
+(test (parse "{scalar-mult 2 {4 2 3}}") => (Smult 2 (Set '(2 3 4))))
 (test (parse "{fun {x x} x}") =error> "parse-sexpr: `fun' has a duplicate param name in (fun (x x) x)")
 (test (parse "{intersect {1 2 3} {4 2 3}}") => (Inter (Set '(1 2 3)) (Set '(2 3 4))))
+(test (parse "{call-static {fun {x y} {union x S}}
+                              {scalar-mult 3 S}
+                              {4 5 7 6 9 8 8 8}}") => (CallS (Fun 'x 'y (Union (Id 'x) (Id 'S))) 
+                         (Smult 3 (Id 'S)) 
+                         (Set '(4 5 6 7 8 9))))
+(test (parse "{call-dynamic {fun {x y} {union x S}}
+                              {scalar-mult 3 S}
+                              {4 5 7 6 9 8 8 8}}") => (CallD (Fun 'x 'y (Union (Id 'x) (Id 'S))) 
+                         (Smult 3 (Id 'S)) 
+                         (Set '(4 5 6 7 8 9))))
 (test (parse "{with {S {intersect {1 2 3} {4 2 3}}}
                  {call-static {fun {x y} {union x S}}
                               {scalar-mult 3 S}
@@ -177,12 +191,6 @@ It returns all the members that are exist in the A list.
              (Inter (Set '(1 2 3)) (Set '(2 3 4)))
              (Inter (Set '(1 2 3)) (Set '(2 3 4)))))
 
-
-(test (parse "{with {S {intersect {1 2 3} {4 2 3}}}
-              {fun {x} S}}")
-      =error> "parse-sexpr: bad `fun' syntax in (fun (x) S)") ;; functions require two formal parameters
-
-  
 
 ;;-----------------------------------------------------
 ;; Evaluation 
