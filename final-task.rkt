@@ -198,7 +198,8 @@ It returns all the members that are exist in the A list.
 #|
 
 
-
+;; call-static and call-dynamic are basicallt the same but to one difference. In call-static we save the local environment and in call-dynamic
+;; we work with thw same environment. But in both we extend the environment by saving the key-value pairs.
 
 Evaluation rules:
     ;; Please complete the missing parts in the formal specifications below
@@ -246,13 +247,15 @@ Evaluation rules:
 ;; Auxiliary procedures for eval 
 ;; Please complete the missing parts, and add comments (comments should specify 
 ;; the role of each procedure, but also describe your work process). Keep your code readable. 
-
+;; The purpose of this function is to convert a special type SetV to a SOL - out language type 
   (: SetV->set : VAL -> SET)
     (define (SetV->set v)
       (cases v
         [(SetV S) S]
         [else (error 'SetV->set "expects a set, got: ~s" v)]))
-  
+  ;;Here we want to implement a function that will nultiply all elements in the list by scalar.
+  ;; The easiet way is to convert to a SET because we want to use in Racket built in map function and the
+  ;;convert it again to SetV
   (: smult-set : Number VAL -> VAL)
   (define (smult-set n s)
     (: mult-op : Number -> Number)
@@ -260,6 +263,7 @@ Evaluation rules:
       (* k n))
     (SetV (map mult-op (SetV->set s))))
 
+;;Here we apply a binary SET operation, but in order to use it need to do the conversion from SetV To set and vice versa.
 (: set-op :(SET SET -> SET) VAL VAL -> VAL )
   ;; gets a binary SET operator, and uses it within a SetV
   ;; wrapper
@@ -273,14 +277,15 @@ Evaluation rules:
   ;; evaluates SOL expressions by reducing them to set values
   (define (eval expr env)
     (cases expr
-      [(Set S) (SetV S)]
-      [(Smult n set) (smult-set n (eval set env))]
-      [(Inter l r) (set-op set-intersection(eval l env)(eval r env))]
-      [(Union l r) (set-op set-union(eval l env)(eval r env))]
+      [(Set S) (SetV S)];; eval return VAL so need to convert to the matched type
+      [(Smult n set) (smult-set n (eval set env))];; Here want to multiply by scalar - but set is an SOL need to convert it to VAL and call eval.
+      [(Inter l r) (set-op set-intersection(eval l env)(eval r env))];; Need to convert to VAL but after calling eval (so will get the "final" value)
+      [(Union l r) (set-op set-union(eval l env)(eval r env))];; the same as Inter
       [(Id name) (lookup name env)]
       [(Fun bound-id1 bound-id2 bound-body)
        (FunV bound-id1 bound-id2 bound-body env)]
-      [(CallS fun-expr arg-expr1 arg-expr2)
+       ;; Here we must extend our environment becuse each time we call eval we want to look-up for the right instance
+      [(CallS fun-expr arg-expr1 arg-expr2);; In Call we validate that the first argument is a function
        (let ([fval (eval fun-expr env)])
          (cases fval
            [(FunV bound-id1 bound-id2 bound-body f-env)
@@ -302,7 +307,8 @@ Evaluation rules:
           (Extend 'first
                   (Extend 'cons 
                           (EmptyEnv)))))|#
-
+;; run wrap all together: we start from a string and then call all the functions: parsing and then eval. 
+;; Run function must return a SET because - in the end we want to have an SOL
   (: run : String -> (U SET VAL))
   ;; evaluate a SOL program contained in a string
   (define (run str)
