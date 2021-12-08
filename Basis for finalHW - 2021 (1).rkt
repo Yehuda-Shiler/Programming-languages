@@ -1,35 +1,38 @@
 #lang pl
+;; question 1)
+#| the BNF define the language rules.
 
-#| Please complete the missing rules below  
+;; intersect and union get <SOL> as parameters to let the BNF be recursive
+
 <SOL> :: = { <NumList> }
         |  { scalar-mult <num> <SOL> }
-        |  { intersect <-- fill in -->}
-        |  { union <-- fill in --> } 
+        |  { intersect <SOL> <SOL>} 
+        |  { union <SOL> <SOL> } 
         |  <id>
         |  { with {<id> <SOL> } <SOL> } ;; this should be a syntactic sugar
         |  { fun { <id> <id> } <SOL> } ;; a function must have exactly two formal parameters
         |  { call-static <SOL> <SOL> <SOL> } ;; extends closure environment
         |  { call-dynamic <SOL> <SOL> <SOL> } ;; extends current environment
-
 <NumList> :: =  λ | <num> <NumList> ;; where λ stands for the empty word, i.e., { } is the empty set
-
 ;; where <num> is any expression identified by Racket as a Number
 ;; and <id> is any expression such that Racket identifies '<id> as a symbol
  
 |#
 
 
+;;define constructors for SOL type: according to the BNF implementation:
+;; Inter and Union constructors: get SOL according to my BNF .
 ;; -----------------------------------------------------
 ;; The abstract syntax tree SOL
 (define-type SET = (Listof Number))
 (define-type SOL
-  ;; Please complete the missing parts -- you are NOT allowed to use additional variants (constructors)
+  ;; 
     [Set  SET]
-    [Smult <-- fill in -->]
-    [Inter <-- fill in -->]
-    [Union <-- fill in -->]
+    [Smult Number SOL]
+    [Inter SOL SOL]
+    [Union SOL SOL]
     [Id    Symbol]
-;;    [With  Symbol SOL SOL] -- not to be used, syntactic sugar for ...
+;;  [With  Symbol SOL SOL] -- not to be used, syntactic sugar for ...
     [Fun   Symbol Symbol SOL]
     [CallS SOL SOL SOL]
     [CallD SOL SOL SOL])
