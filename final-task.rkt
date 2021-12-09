@@ -301,18 +301,23 @@ Evaluation rules:
                               fval)]))]))
 
 
-#|(: createGlobalEnv : -> ENV)
+(: createGlobalEnv : -> ENV)
 (define (createGlobalEnv)
-  (Extend 'second 
+  (Extend 'second
+          (FunV 'x 'y (CallS (Id 'x) (Fun 'x 'y (Id 'y)) (Set '())) (EmptyEnv))
           (Extend 'first
-                  (Extend 'cons 
-                          (EmptyEnv)))))|#
+                  (FunV 'x 'y (CallS (Id 'y) (Fun 'x 'y (Id 'x)) (Set '())) (EmptyEnv))
+                  (Extend 'cons
+                          (FunV 'x 'y (Fun 'x 'y (CallS (Id 'x) (Id 'x) (Id 'y))) (EmptyEnv))
+                                (EmptyEnv)))))
+
+
 ;; run wrap all together: we start from a string and then call all the functions: parsing and then eval. 
 ;; Run function must return a SET because - in the end we want to have an SOL
   (: run : String -> (U SET VAL))
   ;; evaluate a SOL program contained in a string
   (define (run str)
-    (let ([result (eval (parse str) (EmptyEnv))])
+    (let ([result (eval (parse str) (createGlobalEnv))])
        (cases result
          [(SetV S) S]
          [else (error 'run "run expects a Set, got: ~s" result)])))
