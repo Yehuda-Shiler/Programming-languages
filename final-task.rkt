@@ -339,21 +339,7 @@ Evaluation rules:
                               {4 5 7 6 9 8 8 8}}}")
       => '(4 5 6 7 8 9))
 
-#|(test (run "{with {p {call-static cons {1 2 3} {4 2 3}}}
-              {with {S {intersect {call-static first p {}}
-                                  {call-static second p {}}}}
-                 {call-static {fun {x y} {union x S}}
-                              {scalar-mult 3 S}
-                              {4 5 7 6 9 8 8 8}}}}")
-      =>  '(2 3 6 9))|#
 (test (run "{fun {x x} x}") =error> "parse-sexpr: `fun' has a duplicate param name in (fun (x x) x)")
 
-#|(test (run "{with {p {call-dynamic cons {1 2 3} {4 2 3}}}
-              {with {S {intersect {call-dynamic first p {}}
-                                  {call-dynamic second p {}}}}
-                 {call-dynamic {fun {x y} {union x S}}
-                              {scalar-mult 3 S}
-                              {4 5 7 6 9 8 8 8}}}}")
-      =>  '(2 3 6 9))|#
 (test (run "{call-static {1} {2 2} {}}")
       =error> "eval: `call-static' expects a function, got: #(struct:SetV (1))")
